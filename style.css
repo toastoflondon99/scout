@@ -528,6 +528,7 @@ body {
   -webkit-user-select: none;
   will-change: transform;
   transition: box-shadow var(--transition-interactive);
+  z-index: 3;
 }
 
 .swipe-card:active {
@@ -1224,11 +1225,13 @@ body {
 /* Stack peek cards */
 .swipe-card.stack-1 {
   transform: scale(0.95) translateY(8px);
-  z-index: 1;
+  z-index: 2;
+  pointer-events: none;
 }
 .swipe-card.stack-2 {
   transform: scale(0.9) translateY(16px);
-  z-index: 0;
+  z-index: 1;
+  pointer-events: none;
 }
 
 /* ===== BOTTOM NAVIGATION BAR ===== */
