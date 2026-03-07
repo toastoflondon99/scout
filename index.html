@@ -109,17 +109,6 @@
 
       <select id="neighbourhood-select" class="neighbourhood-select" aria-label="Filter by neighbourhood">
         <option value="All">All Neighbourhoods</option>
-        <option value="Shinjuku">Shinjuku</option>
-        <option value="Shibuya">Shibuya</option>
-        <option value="Ginza">Ginza</option>
-        <option value="Ebisu">Ebisu</option>
-        <option value="Roppongi">Roppongi</option>
-        <option value="Otsuka">Otsuka</option>
-        <option value="Kanda">Kanda</option>
-        <option value="Tsukiji">Tsukiji</option>
-        <option value="Jimbocho">Jimbocho</option>
-        <option value="Tsukishima">Tsukishima</option>
-        <option value="Shimokitazawa">Shimokitazawa</option>
       </select>
 
       <button id="theme-toggle" class="theme-toggle" data-theme-toggle aria-label="Switch to light mode" onclick="toggleTheme()">
@@ -211,6 +200,26 @@
   </div>
 
 </div>
+
+<!-- Bottom Navigation Bar -->
+<nav id="bottom-nav" class="bottom-nav">
+  <button class="bottom-nav-item" data-nav="discover" onclick="navigate('discover')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
+    <span>Discover</span>
+  </button>
+  <button class="bottom-nav-item" data-nav="swipe" onclick="resumeSwipe()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="3"/><path d="M9 18V14M9 10V6M15 18V12M15 8V6"/></svg>
+    <span>Swiping</span>
+  </button>
+  <button class="bottom-nav-item" data-nav="shortlist" onclick="navigate('shortlist')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+    <span>Shortlist</span>
+    <span id="nav-shortlist-badge" class="nav-badge"></span>
+  </button>
+</nav>
+
+<!-- Toast Notification -->
+<div id="toast" class="toast"></div>
 
 <!-- Footer Attribution -->
 <footer class="app-footer">
