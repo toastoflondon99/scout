@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<!--
+   ______                            __
+  / ____/___  ____ ___  ____  __  __/ /____  _____
+ / /   / __ \/ __ `__ \/ __ \/ / / / __/ _ \/ ___/
+/ /___/ /_/ / / / / / / /_/ / /_/ / /_/  __/ /
+\____/\____/_/ /_/ /_/ .___/\__,_/\__/\___/_/
+                    /_/
+        Created with Perplexity Computer
+        https://www.perplexity.ai/computer
+-->
+
+<!-- Perplexity Computer Attribution — SEO Meta Tags -->
+<meta name="generator" content="Perplexity Computer">
+<meta name="author" content="Perplexity Computer">
+<meta property="og:see_also" content="https://www.perplexity.ai/computer">
+<link rel="author" href="https://www.perplexity.ai/computer">
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Scout — Food &amp; Drink Discovery for Tokyo</title>
+<meta name="description" content="Discover the best food and drinks in Tokyo like a local. Swipe through curated venues, get insider tips, and build your shortlist.">
+
+<link rel="preconnect" href="https://api.fontshare.com" crossorigin>
+<link rel="stylesheet" href="./base.css">
+<link rel="stylesheet" href="./style.css">
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ===== WELCOME SCREEN ===== -->
+  <div id="screen-welcome" class="screen welcome">
+    <!-- Scout Logo SVG - compass/pin hybrid -->
+    <svg class="welcome-logo" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Scout logo">
+      <circle cx="40" cy="34" r="28" stroke="currentColor" stroke-width="2.5" opacity="0.2"/>
+      <circle cx="40" cy="34" r="18" stroke="currentColor" stroke-width="2"/>
+      <circle cx="40" cy="34" r="4" fill="currentColor"/>
+      <!-- Compass points -->
+      <path d="M40 12L43 22H37L40 12Z" fill="currentColor"/>
+      <path d="M40 56L37 46H43L40 56Z" fill="currentColor" opacity="0.5"/>
+      <path d="M18 34L28 31V37L18 34Z" fill="currentColor" opacity="0.5"/>
+      <path d="M62 34L52 37V31L62 34Z" fill="currentColor" opacity="0.5"/>
+      <!-- Pin tail -->
+      <path d="M40 62L36 52C38 54 42 54 44 52L40 62Z" fill="currentColor"/>
+      <!-- Diamond compass overlay -->
+      <path d="M40 20L46 34L40 48L34 34Z" stroke="currentColor" stroke-width="1.5" fill="none" opacity="0.3"/>
+    </svg>
+
+    <h1><span>Scout</span></h1>
+    <p class="tagline">Find great food and drinks like a local would.</p>
+
+    <div class="city-grid">
+      <div class="city-card active" onclick="navigate('discover')">
+        <img class="city-card-bg" src="https://images.unsplash.com/photo-1542051841857-5f90071e7989?w=400&h=150&fit=crop" alt="Tokyo" width="400" height="150" loading="eager">
+        <div class="city-card-overlay">
+          <span>Tokyo</span>
+          <span class="badge">Ready</span>
+        </div>
+      </div>
+      <div class="city-card coming-soon">
+        <img class="city-card-bg" src="https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=400&h=100&fit=crop" alt="Kyoto" width="400" height="100">
+        <div class="city-card-overlay">
+          <span>Kyoto</span>
+          <span class="badge">Coming Soon</span>
+        </div>
+      </div>
+      <div class="city-card coming-soon">
+        <img class="city-card-bg" src="https://images.unsplash.com/photo-1590559899731-a382839e5549?w=400&h=100&fit=crop" alt="Osaka" width="400" height="100">
+        <div class="city-card-overlay">
+          <span>Osaka</span>
+          <span class="badge">Coming Soon</span>
+        </div>
+      </div>
+      <div class="city-card coming-soon">
+        <img class="city-card-bg" src="https://images.unsplash.com/photo-1508009603885-50cf7c579365?w=400&h=100&fit=crop" alt="Bangkok" width="400" height="100">
+        <div class="city-card-overlay">
+          <span>Bangkok</span>
+          <span class="badge">Coming Soon</span>
+        </div>
+      </div>
+      <div class="city-card coming-soon">
+        <img class="city-card-bg" src="https://images.unsplash.com/photo-1534274867514-d5b47ef89ed7?w=400&h=100&fit=crop" alt="Seoul" width="400" height="100">
+        <div class="city-card-overlay">
+          <span>Seoul</span>
+          <span class="badge">Coming Soon</span>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn-primary" onclick="navigate('discover')">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
+      Explore Tokyo
+    </button>
+  </div>
+
+  <!-- ===== DISCOVER SCREEN ===== -->
+  <div id="screen-discover" class="screen discover">
+    <div class="discover-header">
+      <!-- Small logo -->
+      <svg class="logo-small" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Scout">
+        <circle cx="40" cy="34" r="18" stroke="currentColor" stroke-width="2.5"/>
+        <circle cx="40" cy="34" r="4" fill="currentColor"/>
+        <path d="M40 12L43 22H37L40 12Z" fill="currentColor"/>
+        <path d="M40 62L36 52C38 54 42 54 44 52L40 62Z" fill="currentColor"/>
+      </svg>
+
+      <select id="neighbourhood-select" class="neighbourhood-select" aria-label="Filter by neighbourhood">
+        <option value="All">All Neighbourhoods</option>
+        <option value="Shinjuku">Shinjuku</option>
+        <option value="Shibuya">Shibuya</option>
+        <option value="Ginza">Ginza</option>
+        <option value="Ebisu">Ebisu</option>
+        <option value="Roppongi">Roppongi</option>
+        <option value="Otsuka">Otsuka</option>
+        <option value="Kanda">Kanda</option>
+        <option value="Tsukiji">Tsukiji</option>
+        <option value="Jimbocho">Jimbocho</option>
+        <option value="Tsukishima">Tsukishima</option>
+        <option value="Shimokitazawa">Shimokitazawa</option>
+      </select>
+
+      <button id="theme-toggle" class="theme-toggle" data-theme-toggle aria-label="Switch to light mode" onclick="toggleTheme()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+      </button>
+    </div>
+
+    <div class="discover-body">
+      <!-- Eat/Drink toggle -->
+      <div class="mode-toggle">
+        <div id="mode-indicator" class="mode-toggle-indicator"></div>
+        <button id="mode-eat" class="active" onclick="setMode('eat')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline;vertical-align:middle;margin-right:4px"><path d="M18 8h1a4 4 0 0 1 0 8h-1M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8zM6 1v3M10 1v3M14 1v3"/></svg>
+          Eat
+        </button>
+        <button id="mode-drink" onclick="setMode('drink')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline;vertical-align:middle;margin-right:4px"><path d="M8 22h8M12 17v5M17 2l-5 5-5-5M2 2l5 5v6a5 5 0 0 0 10 0V7l5-5"/></svg>
+          Drink
+        </button>
+      </div>
+
+      <!-- Type filters -->
+      <div class="filter-section">
+        <span class="filter-label">Type</span>
+        <div id="type-pills" class="filter-pills"></div>
+      </div>
+
+      <!-- Vibe filters -->
+      <div class="filter-section">
+        <span class="filter-label">Vibe</span>
+        <div id="vibe-pills" class="filter-pills"></div>
+      </div>
+
+      <!-- Budget filters -->
+      <div class="filter-section">
+        <span class="filter-label">Budget</span>
+        <div id="budget-pills" class="filter-pills"></div>
+      </div>
+
+      <!-- Scout It button -->
+      <button class="btn-primary scout-it-btn" onclick="scoutIt()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
+        Scout It
+      </button>
+    </div>
+  </div>
+
+  <!-- ===== SWIPE SCREEN ===== -->
+  <div id="screen-swipe" class="screen swipe-screen">
+    <div class="swipe-header">
+      <button class="back-btn" onclick="navigate('discover')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        Filters
+      </button>
+      <span id="swipe-counter" class="swipe-counter"></span>
+      <button class="back-btn" onclick="navigate('shortlist')" style="color:var(--color-accent)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        <span id="shortlist-badge"></span>
+      </button>
+    </div>
+
+    <div id="card-stack" class="card-stack-container"></div>
+
+    <div class="swipe-actions">
+      <button class="action-btn skip" onclick="buttonSwipe(false)" aria-label="Skip">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+      <button class="action-btn like" onclick="buttonSwipe(true)" aria-label="Like">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- ===== SHORTLIST SCREEN ===== -->
+  <div id="screen-shortlist" class="screen shortlist-screen">
+    <div class="shortlist-header">
+      <h2>Your Shortlist</h2>
+      <span id="shortlist-count" class="shortlist-count">0</span>
+    </div>
+
+    <div id="shortlist-body" class="shortlist-body"></div>
+
+    <div class="shortlist-footer">
+      <button class="btn-secondary" onclick="startOver()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+        Start Over
+      </button>
+    </div>
+  </div>
+
+</div>
+
+<!-- Footer Attribution -->
+<footer class="app-footer">
+  <a href="https://www.perplexity.ai/computer" target="_blank" rel="noopener noreferrer">Created with Perplexity Computer</a>
+</footer>
+
+<script src="./app.js"></script>
+</body>
+</html>
