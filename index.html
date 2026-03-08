@@ -24,6 +24,7 @@
 <meta name="description" content="Discover the best food and drinks in Tokyo like a local. Swipe through curated venues, get insider tips, and build your shortlist.">
 
 <link rel="preconnect" href="https://api.fontshare.com" crossorigin>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
 <link rel="stylesheet" href="./base.css">
 <link rel="stylesheet" href="./style.css">
 </head>
@@ -207,14 +208,55 @@
       <span id="shortlist-count" class="shortlist-count">0</span>
     </div>
 
+    <!-- Shortlist filters -->
+    <div id="shortlist-filters" class="shortlist-filters" style="display:none">
+      <div class="shortlist-filter-row">
+        <select id="sl-neighbourhood" class="sl-filter-select" aria-label="Filter by neighbourhood">
+          <option value="All">All Areas</option>
+        </select>
+        <select id="sl-type" class="sl-filter-select" aria-label="Filter by type">
+          <option value="All">All Types</option>
+        </select>
+        <select id="sl-sort" class="sl-filter-select" aria-label="Sort shortlist">
+          <option value="added">Order Added</option>
+          <option value="score">Top Scored</option>
+          <option value="price-low">Price: Low</option>
+          <option value="price-high">Price: High</option>
+          <option value="nearest">Nearest</option>
+        </select>
+      </div>
+      <div class="shortlist-filter-pills">
+        <button id="sl-michelin-btn" class="sl-pill" data-active="false">★ Michelin</button>
+        <button id="sl-moe-btn" class="sl-pill" data-active="false">👋 Moè</button>
+        <button id="sl-gf-btn" class="sl-pill" data-active="false">🌾 GF</button>
+      </div>
+    </div>
+
     <div id="shortlist-body" class="shortlist-body"></div>
 
     <div class="shortlist-footer">
+      <button class="btn-secondary" onclick="navigate('map')" style="margin-right:var(--space-2)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        View on Map
+      </button>
       <button class="btn-secondary" onclick="startOver()">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
         Start Over
       </button>
     </div>
+  </div>
+
+  <!-- ===== MAP SCREEN ===== -->
+  <div id="screen-map" class="screen map-screen">
+    <div class="map-header">
+      <h2>Map</h2>
+      <div class="map-header-actions">
+        <button id="map-mode-all" class="map-mode-btn active" onclick="setMapMode('all')">All Venues</button>
+        <button id="map-mode-shortlist" class="map-mode-btn" onclick="setMapMode('shortlist')">Shortlist</button>
+      </div>
+    </div>
+    <div id="map-container" class="map-container"></div>
+    <div id="map-venue-card" class="map-venue-card" style="display:none"></div>
   </div>
 
 </div>
@@ -234,6 +276,10 @@
     <span>Shortlist</span>
     <span id="nav-shortlist-badge" class="nav-badge"></span>
   </button>
+  <button class="bottom-nav-item" data-nav="map" onclick="navigate('map')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+    <span>Map</span>
+  </button>
 </nav>
 
 <!-- Toast Notification -->
@@ -244,6 +290,7 @@
   <a href="https://www.perplexity.ai/computer" target="_blank" rel="noopener noreferrer">Created with Perplexity Computer</a>
 </footer>
 
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script src="./app.js"></script>
 </body>
 </html>

@@ -190,7 +190,16 @@ var state = {
   shortlist: [],
   theme: 'dark',
   hasStack: false,
-  isSwiping: false
+  isSwiping: false,
+  mapMode: 'all',
+  userLat: null,
+  userLng: null,
+  slFilterNeighbourhood: 'All',
+  slFilterType: 'All',
+  slFilterSort: 'added',
+  slFilterMichelin: false,
+  slFilterMoe: false,
+  slFilterGF: false
 };
 
 /* ===== ROUTING ===== */
@@ -202,7 +211,7 @@ function navigate(screen) {
 
 function handleHash() {
   var hash = window.location.hash.replace('#', '') || 'welcome';
-  var valid = ['welcome', 'discover', 'swipe', 'shortlist'];
+  var valid = ['welcome', 'discover', 'swipe', 'shortlist', 'map'];
   state.screen = valid.includes(hash) ? hash : 'welcome';
   renderScreen();
 }
@@ -215,6 +224,7 @@ function renderScreen() {
     if (state.screen === 'discover') renderDiscover();
     if (state.screen === 'swipe') renderSwipe();
     if (state.screen === 'shortlist') renderShortlist();
+    if (state.screen === 'map') renderMap();
   }
 
   var bottomNav = document.getElementById('bottom-nav');
@@ -814,12 +824,15 @@ function buttonSwipe(isYes) {
 function renderShortlist() {
   var body = document.getElementById('shortlist-body');
   var countEl = document.getElementById('shortlist-count');
+  var filtersEl = document.getElementById('shortlist-filters');
   if (!body) return;
 
   if (countEl) countEl.textContent = state.shortlist.length;
   updateBottomNav();
+  initShortlistFilters();
 
   if (state.shortlist.length === 0) {
+    if (filtersEl) filtersEl.style.display = 'none';
     body.innerHTML =
       '<div class="empty-state">' +
         '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M16 16s-1.5-2-4-2-4 2-4 2M9 9h.01M15 9h.01"/></svg>' +
@@ -829,10 +842,31 @@ function renderShortlist() {
     return;
   }
 
-  body.innerHTML = state.shortlist.map(function(venue, idx) {
+  if (filtersEl) filtersEl.style.display = 'flex';
+  buildShortlistFilterDropdowns();
+
+  var filtered = getFilteredShortlist();
+
+  if (filtered.length === 0) {
+    body.innerHTML =
+      '<div class="empty-state">' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>' +
+        '<h3>No matches</h3>' +
+        '<p>Try changing your filters above.</p>' +
+      '</div>';
+    return;
+  }
+
+  body.innerHTML = filtered.map(function(venue, idx) {
     var scoreClass = venue.authenticityScore >= 8.5 ? 'high' : (venue.authenticityScore >= 7 ? 'medium' : 'low');
     var priceStr = '';
-    for (var p = 0; p < venue.price; p++) priceStr += '¥';
+    for (var p = 0; p < venue.price; p++) priceStr += '\u00a5';
+
+    var distHtml = '';
+    if (state.userLat !== null) {
+      var km = haversineKm(state.userLat, state.userLng, venue.lat, venue.lng);
+      distHtml = '<span class="sl-distance">' + formatDistance(km) + '</span>';
+    }
 
     return '<div class="shortlist-card" data-index="' + idx + '">' +
       '<div class="shortlist-card-main" onclick="toggleShortlistCard(' + idx + ')">' +
@@ -845,6 +879,7 @@ function renderShortlist() {
             '<span>' + venue.neighbourhood + '</span>' +
             '<span class="card-meta-sep"></span>' +
             '<span>' + priceStr + '</span>' +
+            (distHtml ? '<span class="card-meta-sep"></span>' + distHtml : '') +
           '</div>' +
           '<div style="margin-top:auto;display:flex;align-items:center;gap:var(--space-2)">' +
             '<span class="score-badge" style="background:' + (scoreClass === 'high' ? 'var(--color-success)' : scoreClass === 'medium' ? 'var(--color-accent)' : 'var(--color-error)') + '">' + venue.authenticityScore.toFixed(1) + '</span>' +
@@ -882,6 +917,325 @@ function startOver() {
   state.filteredVenues = [];
   state.hasStack = false;
   navigate('discover');
+}
+
+/* ===== GPS / DISTANCE ===== */
+function requestUserLocation() {
+  if (!navigator.geolocation) return;
+  navigator.geolocation.getCurrentPosition(
+    function(pos) {
+      state.userLat = pos.coords.latitude;
+      state.userLng = pos.coords.longitude;
+      if (state.screen === 'map') addUserMarker();
+      if (state.screen === 'shortlist') renderShortlist();
+    },
+    function() { /* silently fail */ },
+    { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+  );
+}
+
+function haversineKm(lat1, lng1, lat2, lng2) {
+  var R = 6371;
+  var dLat = (lat2 - lat1) * Math.PI / 180;
+  var dLng = (lng2 - lng1) * Math.PI / 180;
+  var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLng / 2) * Math.sin(dLng / 2);
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function formatDistance(km) {
+  if (km < 1) return Math.round(km * 1000) + 'm';
+  return km.toFixed(1) + 'km';
+}
+
+/* ===== SHORTLIST FILTERING ===== */
+function getFilteredShortlist() {
+  var list = state.shortlist.slice();
+
+  if (state.slFilterNeighbourhood !== 'All') {
+    list = list.filter(function(v) { return v.neighbourhood === state.slFilterNeighbourhood; });
+  }
+  if (state.slFilterType !== 'All') {
+    list = list.filter(function(v) {
+      var typeField = v.category === 'eat' ? v.cuisineType : v.barType;
+      return typeField === state.slFilterType;
+    });
+  }
+  if (state.slFilterMichelin) {
+    list = list.filter(function(v) { return v.michelinStatus !== 'none'; });
+  }
+  if (state.slFilterMoe) {
+    list = list.filter(function(v) { return v.friendRec; });
+  }
+  if (state.slFilterGF) {
+    list = list.filter(function(v) { return v.glutenFree; });
+  }
+
+  var sortKey = state.slFilterSort;
+  if (sortKey === 'score') {
+    list.sort(function(a, b) { return b.authenticityScore - a.authenticityScore; });
+  } else if (sortKey === 'price-low') {
+    list.sort(function(a, b) { return a.price - b.price; });
+  } else if (sortKey === 'price-high') {
+    list.sort(function(a, b) { return b.price - a.price; });
+  } else if (sortKey === 'nearest' && state.userLat !== null) {
+    list.sort(function(a, b) {
+      var da = haversineKm(state.userLat, state.userLng, a.lat, a.lng);
+      var db = haversineKm(state.userLat, state.userLng, b.lat, b.lng);
+      return da - db;
+    });
+  }
+
+  return list;
+}
+
+function buildShortlistFilterDropdowns() {
+  var nSelect = document.getElementById('sl-neighbourhood');
+  var tSelect = document.getElementById('sl-type');
+  if (!nSelect || !tSelect) return;
+
+  var neighbourhoods = {};
+  var types = {};
+  state.shortlist.forEach(function(v) {
+    neighbourhoods[v.neighbourhood] = true;
+    var tf = v.category === 'eat' ? v.cuisineType : v.barType;
+    if (tf) types[tf] = true;
+  });
+
+  nSelect.innerHTML = '<option value="All">All Areas</option>';
+  Object.keys(neighbourhoods).sort().forEach(function(n) {
+    var opt = document.createElement('option');
+    opt.value = n;
+    opt.textContent = n;
+    nSelect.appendChild(opt);
+  });
+  nSelect.value = state.slFilterNeighbourhood;
+
+  tSelect.innerHTML = '<option value="All">All Types</option>';
+  Object.keys(types).sort().forEach(function(t) {
+    var opt = document.createElement('option');
+    opt.value = t;
+    opt.textContent = t;
+    tSelect.appendChild(opt);
+  });
+  tSelect.value = state.slFilterType;
+
+  document.getElementById('sl-sort').value = state.slFilterSort;
+  document.getElementById('sl-michelin-btn').setAttribute('data-active', state.slFilterMichelin);
+  document.getElementById('sl-moe-btn').setAttribute('data-active', state.slFilterMoe);
+  document.getElementById('sl-gf-btn').setAttribute('data-active', state.slFilterGF);
+}
+
+function initShortlistFilters() {
+  var nSelect = document.getElementById('sl-neighbourhood');
+  var tSelect = document.getElementById('sl-type');
+  var sSelect = document.getElementById('sl-sort');
+  if (!nSelect) return;
+  if (nSelect._slBound) return;
+  nSelect._slBound = true;
+
+  nSelect.addEventListener('change', function() {
+    state.slFilterNeighbourhood = this.value;
+    renderShortlist();
+  });
+  tSelect.addEventListener('change', function() {
+    state.slFilterType = this.value;
+    renderShortlist();
+  });
+  sSelect.addEventListener('change', function() {
+    state.slFilterSort = this.value;
+    renderShortlist();
+  });
+
+  document.getElementById('sl-michelin-btn').addEventListener('click', function() {
+    state.slFilterMichelin = !state.slFilterMichelin;
+    this.setAttribute('data-active', state.slFilterMichelin);
+    renderShortlist();
+  });
+  document.getElementById('sl-moe-btn').addEventListener('click', function() {
+    state.slFilterMoe = !state.slFilterMoe;
+    this.setAttribute('data-active', state.slFilterMoe);
+    renderShortlist();
+  });
+  document.getElementById('sl-gf-btn').addEventListener('click', function() {
+    state.slFilterGF = !state.slFilterGF;
+    this.setAttribute('data-active', state.slFilterGF);
+    renderShortlist();
+  });
+}
+
+/* ===== MAP SCREEN ===== */
+var scoutMap = null;
+var mapMarkers = [];
+var userMarkerLayer = null;
+
+function renderMap() {
+  var container = document.getElementById('map-container');
+  if (!container) return;
+
+  if (!scoutMap) {
+    scoutMap = L.map('map-container', {
+      zoomControl: true,
+      attributionControl: true
+    }).setView([35.6762, 139.7100], 13);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap',
+      maxZoom: 18
+    }).addTo(scoutMap);
+
+    scoutMap.on('click', function() {
+      closeMapCard();
+    });
+  }
+
+  /* Multiple resize calls to handle delayed container rendering */
+  setTimeout(function() {
+    scoutMap.invalidateSize();
+    plotMapMarkers();
+    addUserMarker();
+  }, 150);
+  setTimeout(function() {
+    scoutMap.invalidateSize();
+  }, 400);
+  setTimeout(function() {
+    scoutMap.invalidateSize();
+  }, 800);
+
+  updateMapModeButtons();
+  requestUserLocation();
+}
+
+function updateMapModeButtons() {
+  var allBtn = document.getElementById('map-mode-all');
+  var slBtn = document.getElementById('map-mode-shortlist');
+  if (!allBtn) return;
+  allBtn.classList.toggle('active', state.mapMode === 'all');
+  slBtn.classList.toggle('active', state.mapMode === 'shortlist');
+}
+
+function setMapMode(mode) {
+  state.mapMode = mode;
+  updateMapModeButtons();
+  plotMapMarkers();
+  closeMapCard();
+}
+
+function plotMapMarkers() {
+  if (!scoutMap) return;
+
+  mapMarkers.forEach(function(m) { scoutMap.removeLayer(m); });
+  mapMarkers = [];
+
+  var venues = state.mapMode === 'shortlist' ? state.shortlist : VENUES;
+  var shortlistIds = {};
+  state.shortlist.forEach(function(v) { shortlistIds[v.id] = true; });
+
+  venues.forEach(function(venue) {
+    var isShortlisted = shortlistIds[venue.id];
+    var markerClass = 'venue-marker ' + venue.category;
+    if (isShortlisted) markerClass += ' shortlisted';
+
+    var size = isShortlisted ? 14 : 12;
+    var icon = L.divIcon({
+      className: markerClass,
+      iconSize: [size, size],
+      iconAnchor: [size / 2, size / 2]
+    });
+
+    var marker = L.marker([venue.lat, venue.lng], { icon: icon })
+      .addTo(scoutMap);
+
+    marker.on('click', function(e) {
+      L.DomEvent.stopPropagation(e);
+      showMapCard(venue);
+    });
+
+    mapMarkers.push(marker);
+  });
+
+  if (venues.length > 0) {
+    var bounds = L.latLngBounds(venues.map(function(v) { return [v.lat, v.lng]; }));
+    if (state.userLat !== null) {
+      bounds.extend([state.userLat, state.userLng]);
+    }
+    scoutMap.fitBounds(bounds, { padding: [40, 40], maxZoom: 15 });
+  }
+}
+
+function addUserMarker() {
+  if (!scoutMap || state.userLat === null) return;
+  if (userMarkerLayer) scoutMap.removeLayer(userMarkerLayer);
+
+  var icon = L.divIcon({
+    className: 'user-marker',
+    iconSize: [16, 16],
+    iconAnchor: [8, 8]
+  });
+
+  userMarkerLayer = L.marker([state.userLat, state.userLng], { icon: icon, zIndexOffset: 1000 })
+    .addTo(scoutMap);
+}
+
+function showMapCard(venue) {
+  var card = document.getElementById('map-venue-card');
+  if (!card) return;
+
+  var priceStr = '';
+  for (var p = 0; p < venue.price; p++) priceStr += '\u00a5';
+
+  var distHtml = '';
+  if (state.userLat !== null) {
+    var km = haversineKm(state.userLat, state.userLng, venue.lat, venue.lng);
+    distHtml = '<span class="sl-distance">' + formatDistance(km) + ' away</span>';
+  }
+
+  var michelinHtml = '';
+  if (venue.michelinStatus === 'star') michelinHtml = '<span style="color:var(--color-accent)">\u2605 Michelin</span>';
+  else if (venue.michelinStatus === 'bibGourmand') michelinHtml = '<span style="color:var(--color-accent)">\ud83c\udf7d Bib Gourmand</span>';
+
+  card.innerHTML =
+    '<button class="map-card-close" onclick="closeMapCard()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg></button>' +
+    '<img class="map-card-thumb" src="' + venue.photoUrl + '" alt="' + venue.name + '" loading="lazy" width="64" height="64">' +
+    '<div class="map-card-info">' +
+      '<h4>' + venue.name + '</h4>' +
+      '<div class="map-card-meta">' +
+        '<span>' + venue.type + '</span>' +
+        '<span>\u00b7</span>' +
+        '<span>' + venue.neighbourhood + '</span>' +
+        '<span>\u00b7</span>' +
+        '<span>' + priceStr + '</span>' +
+        (distHtml ? '<span>\u00b7</span>' + distHtml : '') +
+        (michelinHtml ? '<span>\u00b7</span>' + michelinHtml : '') +
+      '</div>' +
+      '<div class="map-card-actions">' +
+        '<a href="https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(venue.name + ' ' + venue.nameJa + ' Tokyo') + '" target="_blank" rel="noopener noreferrer">Directions</a>' +
+        '<button onclick="addToShortlistFromMap(\'' + venue.id + '\')">+ Shortlist</button>' +
+      '</div>' +
+    '</div>';
+
+  card.style.display = 'flex';
+
+  scoutMap.panTo([venue.lat, venue.lng], { animate: true });
+}
+
+function closeMapCard() {
+  var card = document.getElementById('map-venue-card');
+  if (card) card.style.display = 'none';
+}
+
+function addToShortlistFromMap(venueId) {
+  var venue = VENUES.find(function(v) { return v.id === venueId; });
+  if (!venue) return;
+  if (state.shortlist.some(function(s) { return s.id === venueId; })) {
+    showToast('Already in shortlist');
+    return;
+  }
+  state.shortlist.push(venue);
+  showToast('Added to shortlist \u2665');
+  updateBottomNav();
+  plotMapMarkers();
 }
 
 /* ===== INIT ===== */
